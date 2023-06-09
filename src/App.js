@@ -1,17 +1,37 @@
 import React, { useEffect, useState } from "react";
+
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
+
+import ListItemText from '@mui/material/ListItemText';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 import { MoneyTalks } from "./abi/abi";
 import Web3 from "web3";
 import "./App.css";
+import { BigNumber } from "@ethersproject/bignumber";
 
-let injectedProvider = false
-
-if (typeof window.ethereum !== 'undefined') {
-  injectedProvider = true
-  console.log(window.ethereum)
+function Copyright(props) {
+  return (
+    <Typography variant="body2" color="text.secondary" align="center" {...props}>
+      {'Copyright © '}
+      <Link color="inherit" href="https://github.com/theoriz0">
+        Theoriz0
+      </Link>{' '}
+      {new Date().getFullYear()}
+      {'.'}
+    </Typography>
+  );
 }
 
-
-const isMetaMask = injectedProvider ? window.ethereum.isMetaMask : false
+function weiToEth(inWei) {
+  return BigNumber.from(inWei) / 1e18;
+}
 
 // Access our wallet inside of our dapp
 const web3 = new Web3("https://sepolia.infura.io/v3/0702977a8f3c4ebb82606e5e86171ab6");
@@ -35,7 +55,7 @@ function App() {
     const account = accounts[0];
     // Get permission to access user funds to pay for gas fees
     const gas = await moneyTalks.methods.write(note).estimateGas();
-    const post = await moneyTalks.methods.write(note).send({
+    await moneyTalks.methods.write(note).send({
       from: account,
       value: Math.round(value * 10 ** 18),
       gas,
@@ -49,25 +69,25 @@ function App() {
     const note = await moneyTalks.methods.notes(index).call({
       from: account
     });
+    note.tipFee = weiToEth(note.tipFee)
     setData(note);
   };
 
   const eventGet = () => {
     moneyTalks.getPastEvents("Said", { fromBlock: 1 })
       .then(results => {
-        let newEvents = results.map(e => e.returnValues)
-        
+        let newEvents = results.map(e => {
+          let withTipEth = weiToEth(e.returnValues.withFee)
+          e.returnValues.withFee = withTipEth
+          return e.returnValues
+        })
+
         newEvents.sort((a, b) => {
-          console.log(a)
-          console.log(b)
-          if ((a.withFee - b.withFee) === 0n) {
-            console.log("withFee the same")
-            return ((a.index - b.index) > 0n ? 1 : -1);
-          } else if ((a.withFee - b.withFee) > 0n) {
-            console.log("a withFee bigger")
+          if ((a.withFee - b.withFee) === 0) {
+            return (a.index > b.index ? 1 : -1);
+          } else if (a.withFee > b.withFee) {
             return -1;
           } else {
-            console.log("b withFee bigger")
             return 1;
           }
         })
@@ -76,67 +96,155 @@ function App() {
       .catch(err => { throw err });
   }
 
+  const eventGetDummy = () => {
+    setEvents([
+      { Quote: "note1", withFee: 0, index: 0 },
+      { Quote: "note2", withFee: 1.2, index: 1 },
+      { Quote: "note3", withFee: 1.3, index: 2 }
+    ])
+  }
+
   useEffect(() => {
     eventGet()
+    // eventGetDummy()
   }, []);
 
   return (
-    <div className="main">
-      <ul>
-        {events.map(e => <li>Note: {e.Quote}, TipFee: {e.withFee.toString()}, Index:{e.index.toString()}</li>)}
-      </ul>
-      <div className="card">
-        <h2>Injected Provider {injectedProvider ? 'DOES' : 'DOES NOT'} Exist</h2>
-        {isMetaMask &&
-          <button>Connect MetaMask</button>
-        }
-        <h1>Write</h1>
-        <form className="form" onSubmit={noteSet}>
-          <label>
-            Note:
-            <input
-              className="input"
-              type="text"
-              name="name"
+    <Grid container component="main" sx={{ height: '100vh' }}>
+      <Grid
+        item
+        xs={12}
+        sm={4}
+        md={7}
+        sx={{
+          // backgroundImage: 'url(https://source.unsplash.com/random?wallpapers)',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: (t) =>
+            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <Box
+          sx={{
+            my: 8,
+            mx: 4,
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+          <Typography component="h1" variant="h5">MoneyTalks!!</Typography>
+          <List>
+            <ListItem key="-1">
+              <ListItemText primary="Quote" />
+              <ListItemText primary="Tip(In Eth)" />
+              <ListItemText primary="Index" />
+            </ListItem>
+            {events.map(e => <ListItem key={e.index.toString()}>
+              <ListItemText primary={e.Quote} />
+              <ListItemText secondary={e.withFee} />
+              <ListItemText secondary={e.index.toString()} />
+            </ListItem>)}
+          </List>
+        </Box>
+      </Grid>
+      <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+        <Box
+          sx={{
+            my: 8,
+            mx: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+          <Typography component="h1" variant="h5">Write</Typography>
+          <Box component="form" noValidate onSubmit={noteSet} sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="note"
+              label="Message"
+              name="note"
               onChange={(t) => setNote(t.target.value)}
-              placeholder="Note"
+              autoFocus
             />
-            <input
-              className="input"
-              type="text"
-              name="name"
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="tip"
+              label="Tip"
+              type="string"
+              id="tip"
               onChange={(t) => setValue(parseFloat(t.target.value))}
-              placeholder="Tip"
             />
-          </label>
-          <button className="button" type="submit" value="Write">
-            Write
-          </button>
-        </form>
-        <hr></hr>
-        <h1>Read</h1>
-        <form className="form" onSubmit={dataGet}>
-          <label>
-            Index of Note:
-            <input
-              className="input"
-              type="number"
-              name="name"
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled
+            >
+              Write (Developing)
+            </Button>
+            <Grid container>
+              <Grid item xs>
+                <Link href="https://sepolia.etherscan.io/address/0x6a445416819625b06564ce3daeba0d38edffd960#writeContract#F2" variant="body2">
+                  Use etherscan.io To Write
+                </Link>
+              </Grid>
+            </Grid>
+          </Box>
+          <Typography component="h1" variant="h5" sx={{ mt: 7 }}>Read</Typography>
+          <Box component="form" noValidate onSubmit={dataGet} sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="index"
+              label="Index"
+              name="index"
               onChange={(t) => setIndex(parseInt(t.target.value))}
+              autoFocus
             />
-          </label>
-          <button className="button" type="submit" value="Read">
-            Read
-          </button>
-        </form>
-        {JSON.stringify(data, (key, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )}
-        <button className="button" value="Events" onClick={eventGet}>
-          Reload Events
-        </button>
-      </div>
-    </div>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Read One
+            </Button>
+          </Box>
+          <Typography component="p" sx={{ mt: 1, fontSize: 10 }}>
+          Quote: {data.text}, tipFee: {data.tipFee}
+            </Typography>
+          <Typography component="h1" variant="h5" sx={{ mt: 7 }}>Reload All</Typography>
+          <Box component="form" noValidate sx={{ mt: 1 }}>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              onClick={eventGet}
+            >
+              Reload
+            </Button>
+          </Box>
+          <Box
+            sx={{
+              my: 8,
+              mx: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Copyright sx={{ mt: 5 }} />
+          </Box>
+        </Box>
+      </Grid>
+    </Grid>
   );
 }
 
