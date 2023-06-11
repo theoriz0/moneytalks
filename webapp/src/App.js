@@ -96,13 +96,13 @@ function App() {
       .catch(err => { throw err });
   }
 
-  const eventGetDummy = () => {
-    setEvents([
-      { Quote: "note1", withFee: 0, index: 0 },
-      { Quote: "note2", withFee: 1.2, index: 1 },
-      { Quote: "note3", withFee: 1.3, index: 2 }
-    ])
-  }
+  // const eventGetDummy = () => {
+  //   setEvents([
+  //     { Quote: "note1", withFee: 0, index: 0 },
+  //     { Quote: "note2", withFee: 1.2, index: 1 },
+  //     { Quote: "note3", withFee: 1.3, index: 2 }
+  //   ])
+  // }
 
   useEffect(() => {
     eventGet()
