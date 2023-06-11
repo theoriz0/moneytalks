@@ -20,6 +20,8 @@ jobs:
         with:
           submodules: true
       - name: Build And Deploy
+        env:
+          API_SECRET: ${{ secrets.API_SECRET }}
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
