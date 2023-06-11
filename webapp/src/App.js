@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import env from "react-dotenv";
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -34,7 +34,7 @@ function weiToEth(inWei) {
 }
 
 // Access our wallet inside of our dapp
-const web3 = new Web3("https://sepolia.infura.io/v3/0702977a8f3c4ebb82606e5e86171ab6");
+const web3 = new Web3(`https://sepolia.infura.io/v3/${env.API_SECRET}`);
 
 // Contract address of the deployed smart contract
 const contractAddress = "0x6a445416819625b06564ce3daeba0d38edffd960";
