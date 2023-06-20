@@ -12,9 +12,8 @@ import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import { MoneyTalks } from "./abi/abi";
-import Web3 from "web3";
+import { ethers } from "ethers";
 import "./App.css";
-import { BigNumber } from "@ethersproject/bignumber";
 
 function Copyright(props) {
   return (
@@ -29,16 +28,26 @@ function Copyright(props) {
   );
 }
 
-function weiToEth(inWei) {
-  return BigNumber.from(inWei) / 1e18;
-}
-
 // Access our wallet inside of our dapp
-const web3 = new Web3(`https://sepolia.infura.io/v3/${env.API_SECRET}`);
+// const web3 = new Web3(``);
+
+let signer = null;
+
+let provider;
+if (window.ethereum == null) {
+
+    console.log("MetaMask not installed; using read-only defaults");
+    let url = `https://sepolia.infura.io/v3/${env.API_SECRET}`;
+    provider = new ethers.JsonRpcProvider(url);
+} else {
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+}
 
 // Contract address of the deployed smart contract
 const contractAddress = "0x6a445416819625b06564ce3daeba0d38edffd960";
-const moneyTalks = new web3.eth.Contract(MoneyTalks, contractAddress);
+const moneyTalks = new ethers.Contract(contractAddress, MoneyTalks, provider)
 
 function App() {
   const [data, setData] = useState("")
@@ -51,49 +60,69 @@ function App() {
 
   const noteSet = async (t) => {
     t.preventDefault();
-    const accounts = await window.ethereum.enable();
-    const account = accounts[0];
     // Get permission to access user funds to pay for gas fees
-    const gas = await moneyTalks.methods.write(note).estimateGas();
-    await moneyTalks.methods.write(note).send({
-      from: account,
-      value: Math.round(value * 10 ** 18),
-      gas,
-    });
+    // const gas = await moneyTalks.methods.write(note).estimateGas();
+    if (signer == null) {
+      if (window.ethereum == null) {
+        alert("Please install MetaMask");
+        return;
+      }
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+    };
+    try {
+      let tx = await moneyTalks.connect(signer).write(note, {
+        value: ethers.parseEther(value),
+      });
+      await tx.wait();
+      alert("Write success!");
+      eventGet();
+    } catch (e) {
+      alert(e.code);
+    }
+    
   };
 
   const dataGet = async (t) => {
     t.preventDefault();
-    const accounts = await window.ethereum.enable();
-    const account = accounts[0];
-    const note = await moneyTalks.methods.notes(index).call({
-      from: account
-    });
-    note.tipFee = weiToEth(note.tipFee)
-    setData(note);
+    try {
+      const note = await moneyTalks.notes(index);
+      setData({text: note.text, tipFee: ethers.formatEther(note.tipFee)});
+    } catch(e) {
+      alert("Something went wrong, probably wrong index.");
+    }
   };
 
-  const eventGet = () => {
-    moneyTalks.getPastEvents("Said", { fromBlock: 1 })
-      .then(results => {
-        let newEvents = results.map(e => {
-          let withTipEth = weiToEth(e.returnValues.withFee)
-          e.returnValues.withFee = withTipEth
-          return e.returnValues
-        })
+  const eventGet = async () => {
+    let eventFilter = moneyTalks.filters.Said();
+    let events = await moneyTalks.queryFilter(eventFilter);
+    let notes = events.map(e => {
+      return {
+        Quote: e.args.Quote,
+        withFee: e.args.withFee,
+        index: e.args.index
+      }
+    });
+    // moneyTalks.getPastEvents("Said", { fromBlock: 1 })
+    //   .then(results => {
+    //     let newEvents = results.map(e => {
+    //       let withTipEth = e.returnValues.withFee);
+    //       e.returnValues.withFee = withTipEth
+    //       return e.returnValues
+    //     })
 
-        newEvents.sort((a, b) => {
-          if ((a.withFee - b.withFee) === 0) {
-            return (a.index > b.index ? 1 : -1);
-          } else if (a.withFee > b.withFee) {
-            return -1;
-          } else {
-            return 1;
-          }
-        })
-        setEvents(newEvents)
-      })
-      .catch(err => { throw err });
+    notes.sort((a, b) => {
+      if ((a.withFee - b.withFee) === 0) {
+        return (a.index > b.index ? 1 : -1);
+      } else if (a.withFee > b.withFee) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
+    setEvents(notes)
+    //   })
+    //   .catch(err => { throw err });
   }
 
   // const eventGetDummy = () => {
@@ -141,7 +170,7 @@ function App() {
             </ListItem>
             {events.map(e => <ListItem key={e.index.toString()}>
               <ListItemText primary={e.Quote} />
-              <ListItemText secondary={e.withFee} />
+              <ListItemText secondary={ethers.formatEther(e.withFee)} />
               <ListItemText secondary={e.index.toString()} />
             </ListItem>)}
           </List>
@@ -176,26 +205,18 @@ function App() {
               label="Tip"
               type="string"
               id="tip"
-              onChange={(t) => setValue(parseFloat(t.target.value))}
+              onChange={(t) => setValue(t.target.value)}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled
             >
-              Write (Developing)
+              Write
             </Button>
-            <Grid container>
-              <Grid item xs>
-                <Link href="https://sepolia.etherscan.io/address/0x6a445416819625b06564ce3daeba0d38edffd960#writeContract#F2" variant="body2">
-                  Use etherscan.io To Write
-                </Link>
-              </Grid>
-            </Grid>
           </Box>
-          <Typography component="h1" variant="h5" sx={{ mt: 7 }}>Read</Typography>
+          <Typography component="h1" variant="h5" sx={{ mt: 7 }}>Validate on Chain</Typography>
           <Box component="form" noValidate onSubmit={dataGet} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
@@ -213,14 +234,14 @@ function App() {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Read One
+              Validate
             </Button>
           </Box>
           <Typography component="p" sx={{ mt: 1, fontSize: 10 }}>
           Quote: {data.text}, tipFee: {data.tipFee}
             </Typography>
           <Typography component="h1" variant="h5" sx={{ mt: 7 }}>Reload All</Typography>
-          <Box component="form" noValidate sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1 }}>
             <Button
               type="submit"
               fullWidth
