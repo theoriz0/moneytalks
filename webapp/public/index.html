@@ -28,6 +28,13 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div class="pop-up">
+      <canvas id="intro">
+      </canvas>
+      <button class="btn clip-polygon " onclick="closePopUp()">
+        Enter&nbsp&nbsp&nbsp
+      </button>
+    </div>
     <div id="root"></div>
     <!--
       This HTML file is a template.
@@ -40,4 +47,10 @@
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
   </body>
+  <script>
+    function closePopUp() {
+      const popUp = document.querySelector('.pop-up');
+      popUp.remove();
+    }
+  </script>
 </html>
