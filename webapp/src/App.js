@@ -161,7 +161,7 @@ function App() {
           <Typography component="p" variant="h6" sx={{ color: "white"}}>More ETH sent &gt;&gt;&gt; Higher on List!</Typography>
           <Typography component="p" variant="h6" sx={{ color: "gray"}}>(If same ETH value, earlier &gt;&gt;&gt; higher.)</Typography>
           <List sx={{ paddingTop: "2em"}}>
-            {events.map((e, i) => <QuoteCard quote={e} idx={i}/>)}
+            {events.map((e, i) => <QuoteCard quote={e} idx={i} key={e.index}/>)}
           </List>
         </Box>
       </Grid>
