@@ -30,7 +30,7 @@ const theme = createTheme({
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
+      {'Made by '}
       <Link color="inherit" href="https://github.com/theoriz0">
         theoriz0
       </Link>{' '}
@@ -39,9 +39,6 @@ function Copyright(props) {
     </Typography>
   );
 }
-
-// Access our wallet inside of our dapp
-// const web3 = new Web3(``);
 
 let signer = null;
 
@@ -58,7 +55,7 @@ if (window.ethereum == null) {
 }
 
 // Contract address of the deployed smart contract
-const contractAddress = "0x6a445416819625b06564ce3daeba0d38edffd960";
+const contractAddress = "0x7CD3D1CB7ff444717b93EB783956D2c6667AdaDD";
 const moneyTalks = new ethers.Contract(contractAddress, MoneyTalks, provider)
 
 function App() {
@@ -88,6 +85,8 @@ function App() {
       });
       await tx.wait();
       alert("Write success!");
+      setNote("");
+      setValue();
       eventGet();
     } catch (e) {
       alert(e.code);
@@ -98,9 +97,10 @@ function App() {
   const dataGet = async (t) => {
     t.preventDefault();
     try {
-      const note = await moneyTalks.notes(index);
+      const note = await moneyTalks.quotes(index);
       setData({text: note.text, tipFee: ethers.formatEther(note.tipFee)});
     } catch(e) {
+      console.log(e);
       alert("Something went wrong, probably wrong index.");
     }
   };
@@ -110,44 +110,28 @@ function App() {
     let events = await moneyTalks.queryFilter(eventFilter);
     let notes = events.map(e => {
       return {
-        Quote: e.args.Quote,
-        withFee: ethers.formatEther(e.args.withFee),
+        text: e.args.text,
+        tipFee: ethers.formatEther(e.args.tipFee),
         index: e.args.index.toString(),
+        sender: e.args.sender,
       }
     });
-    // moneyTalks.getPastEvents("Said", { fromBlock: 1 })
-    //   .then(results => {
-    //     let newEvents = results.map(e => {
-    //       let withTipEth = e.returnValues.withFee);
-    //       e.returnValues.withFee = withTipEth
-    //       return e.returnValues
-    //     })
 
     notes.sort((a, b) => {
-      if ((a.withFee - b.withFee) === 0) {
+      if ((a.tipFee - b.tipFee) === 0) {
         return (a.index > b.index ? 1 : -1);
-      } else if (a.withFee > b.withFee) {
+      } else if (a.tipFee > b.tipFee) {
         return -1;
       } else {
         return 1;
       }
     });
     setEvents(notes)
-    //   })
-    //   .catch(err => { throw err });
   }
 
-  // const eventGetDummy = () => {
-  //   setEvents([
-  //     { Quote: "note1", withFee: 0, index: 0 },
-  //     { Quote: "note2", withFee: 1.2, index: 1 },
-  //     { Quote: "note3", withFee: 1.3, index: 2 }
-  //   ])
-  // }
 
   useEffect(() => {
     eventGet()
-    // eventGetDummy()
   }, []);
 
   return (
@@ -159,7 +143,6 @@ function App() {
         sm={4}
         md={7}
         sx={{
-          // backgroundImage: 'url(https://source.unsplash.com/random?wallpapers)',
           backgroundRepeat: 'no-repeat',
           backgroundColor: (t) =>
             t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
@@ -175,10 +158,10 @@ function App() {
             flexDirection: 'column',
           }}>
           <Typography component="h1" variant="h3" sx={{ color: "white"}}>MoneyTalks!!</Typography>
-          <Typography component="p" variant="h6" sx={{ color: "white"}}>The more eth you send, the higher your saying will show on the list!</Typography>
-          <Typography component="p" variant="h6" sx={{ color: "gray"}}>(If same eth value, the earlier the higher.)</Typography>
+          <Typography component="p" variant="h6" sx={{ color: "white"}}>More ETH sent &gt;&gt;&gt; Higher on List!</Typography>
+          <Typography component="p" variant="h6" sx={{ color: "gray"}}>(If same ETH value, earlier &gt;&gt;&gt; higher.)</Typography>
           <List sx={{ paddingTop: "2em"}}>
-            {events.map((e, i) => <QuoteCard quote={e} idx={i} />)}
+            {events.map((e, i) => <QuoteCard quote={e} idx={i}/>)}
           </List>
         </Box>
       </Grid>

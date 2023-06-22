@@ -21,16 +21,16 @@ function QuoteCard({ quote, idx }) {
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
   return (
-    <Card key={quote.index}>
+    <Card>
       <CardContent>
             <Crown idx={idx + 1} sx={{flex: "0 1 auto" }}/>
         <Typography sx={{flex: "1 1 auto" }} variant="h5" component="div">
-          {quote.Quote}
+          {quote.text}
         </Typography>
         <Typography sx={{ fontSize: 14, flex: "0 1 auto" }} color="text.secondary" gutterBottom>
-          {"ETH: " + quote.withFee}
+          {"ETH: " + quote.tipFee}
         </Typography>
-        <Button aria-describedby={id} variant="contained" onClick={handleClick}
+        <Button aria-describedby={id} variant="outlined" onClick={handleClick}
          sx={{flex: "0 1 auto", minWidth: "0", marginRight: "2em"}}>
           <MoreVertIcon/>
         </Button>
