@@ -8,12 +8,24 @@ import TextField from '@mui/material/TextField';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 
-import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
 import { MoneyTalks } from "./abi/abi";
 import { ethers } from "ethers";
 import "./App.css";
+import QuoteCard from "./QuoteCard";
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#ff9100',
+    },
+    secondary: {
+      main: '#f50057',
+    },
+  },
+});
 
 function Copyright(props) {
   return (
@@ -99,8 +111,8 @@ function App() {
     let notes = events.map(e => {
       return {
         Quote: e.args.Quote,
-        withFee: e.args.withFee,
-        index: e.args.index
+        withFee: ethers.formatEther(e.args.withFee),
+        index: e.args.index.toString(),
       }
     });
     // moneyTalks.getPastEvents("Said", { fromBlock: 1 })
@@ -139,6 +151,7 @@ function App() {
   }, []);
 
   return (
+    <ThemeProvider theme={theme}>
     <Grid container component="main" sx={{ height: '100vh' }}>
       <Grid
         item
@@ -161,18 +174,11 @@ function App() {
             display: 'flex',
             flexDirection: 'column',
           }}>
-          <Typography component="h1" variant="h5">MoneyTalks!!</Typography>
-          <List>
-            <ListItem key="-1">
-              <ListItemText primary="Quote" />
-              <ListItemText primary="Tip(In Eth)" />
-              <ListItemText primary="Index" />
-            </ListItem>
-            {events.map(e => <ListItem key={e.index.toString()}>
-              <ListItemText primary={e.Quote} />
-              <ListItemText secondary={ethers.formatEther(e.withFee)} />
-              <ListItemText secondary={e.index.toString()} />
-            </ListItem>)}
+          <Typography component="h1" variant="h3" sx={{ color: "white"}}>MoneyTalks!!</Typography>
+          <Typography component="p" variant="h6" sx={{ color: "white"}}>The more eth you send, the higher your saying will show on the list!</Typography>
+          <Typography component="p" variant="h6" sx={{ color: "gray"}}>(If same eth value, the earlier the higher.)</Typography>
+          <List sx={{ paddingTop: "2em"}}>
+            {events.map((e, i) => <QuoteCard quote={e} idx={i} />)}
           </List>
         </Box>
       </Grid>
@@ -185,7 +191,7 @@ function App() {
             flexDirection: 'column',
             alignItems: 'center',
           }}>
-          <Typography component="h1" variant="h5">Write</Typography>
+          <Typography component="h1" variant="h5">WRITE NOW!</Typography>
           <Box component="form" noValidate onSubmit={noteSet} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
@@ -202,7 +208,7 @@ function App() {
               required
               fullWidth
               name="tip"
-              label="Tip"
+              label="ETH to send (0.05, 0.1...)"
               type="string"
               id="tip"
               onChange={(t) => setValue(t.target.value)}
@@ -266,6 +272,7 @@ function App() {
         </Box>
       </Grid>
     </Grid>
+    </ThemeProvider>
   );
 }
 
