@@ -7,24 +7,24 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 contract MoneyTalk {
-    address owner;
+    address public owner;
 
-    struct Note {
+    struct Quote {
         string text;
         uint tipFee;
     }
 
-    Note[] public notes;
+    Quote[] public quotes;
 
-    event Said(string Quote, uint withFee, uint index);
+    event Said(string text, uint tipFee, uint index, address sender);
 
     constructor() {
         owner = msg.sender;
     }
 
-    function write(string calldata note) public payable {
-        notes.push(Note(note, msg.value));
-        emit Said(note, msg.value, notes.length - 1);
+    function write(string memory text) public payable {
+        quotes.push(Quote(text, msg.value));
+        emit Said(text, msg.value, quotes.length - 1, msg.sender);
     }
 
     function withdrawAll() external {

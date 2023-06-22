@@ -10,13 +10,13 @@ export const MoneyTalks = [
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "Quote",
+				"name": "text",
 				"type": "string"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "withFee",
+				"name": "tipFee",
 				"type": "uint256"
 			},
 			{
@@ -24,10 +24,29 @@ export const MoneyTalks = [
 				"internalType": "uint256",
 				"name": "index",
 				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
 			}
 		],
 		"name": "Said",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -37,7 +56,7 @@ export const MoneyTalks = [
 				"type": "uint256"
 			}
 		],
-		"name": "notes",
+		"name": "quotes",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -64,7 +83,7 @@ export const MoneyTalks = [
 		"inputs": [
 			{
 				"internalType": "string",
-				"name": "note",
+				"name": "text",
 				"type": "string"
 			}
 		],
