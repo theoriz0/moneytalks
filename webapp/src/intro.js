@@ -3,7 +3,7 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 
-function main() {
+export default function drawPopUp() {
     //init canvas, renderer, camera, scene
     const canvas = document.querySelector('#intro');
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -124,5 +124,3 @@ function main() {
     drawFont();
     requestAnimationFrame(render);
 }
-
-main();
